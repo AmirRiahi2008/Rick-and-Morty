@@ -17,6 +17,8 @@ export default function CharactersList({
         id={id}
       />
     ));
+    if(!characters)console.log("lfheohff");
+    
 
   return (
     <>

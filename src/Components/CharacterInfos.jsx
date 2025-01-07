@@ -1,8 +1,6 @@
-import React from "react";
-
 export default function CharacterInfos({ allCharacters, isOpen, id }) {
   const a = allCharacters.slice(0, 5).filter((char) => char.id === id);
- 
+  
 
   return (
     <>

@@ -1,22 +1,29 @@
 import { useState, useEffect } from "react";
+
+import { searchCharacter } from "../Services/SearchCharacter.js";
+import { getAllCharacters } from "../Services/GetAllCharacters.js";
+import Loading from "./Loading";
+import Toast from "./Toast";
 import Header from "./Header";
 import CharacterInfos from "./CharacterInfos";
 import CharactersList from "./CharactersList";
-import { getAllCharacters } from "../Services/GetAllCharacters.js";
-import Loading from "./Loading";
-import { searchCharacter } from "../Services/SearchCharacter.js";
+
 export default function Main() {
   const [allCharacters, setAllCharacters] = useState([]);
   const [searchResult, setSearchResult] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [charId, setCharId] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState({ message: "ef", type: "error" });
+  const [error, setError] = useState(false);
+
   useEffect(() => {
     async function characters() {
       try {
         const charactersData = await getAllCharacters();
 
         setAllCharacters(charactersData.results);
+        setSearchResult(charactersData.results);
       } catch (err) {
         console.log(err);
       }
@@ -24,30 +31,52 @@ export default function Main() {
     characters();
   }, []);
 
+  let lastSearch = null;
   async function handleSearch(value) {
+    lastSearch = value;
     try {
+      if (!value || value.trim() === "") {
+        setSearchResult(allCharacters);
+        setError(false);
+        return;
+      }
+
       const data = await searchCharacter(value);
 
+      if (lastSearch !== value) return;
+
+      if (!data || !data.results || data.results.length === 0) {
+        setIsOpen(false);
+        setToast({
+          message: `No characters found for "${value}"`,
+          type: "error",
+        });
+        setError(true);
+        setSearchResult([]);
+        return;
+      }
       setSearchResult(data.results);
+      setError(false);
     } catch (err) {
       console.log(err);
+      setError(true);
+      setToast({ message: "An error occurred while searching", type: "error" });
     }
   }
 
   function handleClickCharacter(id) {
     if (id !== charId) {
-      setLoading(true);
       setIsOpen(true);
       setCharId(id);
-      setLoading(false);
     } else {
       setCharId(null);
-      setLoading(false);
     }
   }
 
   return (
     <>
+      {error && <Toast message={toast.message} type={toast.type} />}
+
       <div className="app">
         <div
           style={{
@@ -61,7 +90,7 @@ export default function Main() {
         <div className="main">
           {Array.isArray(allCharacters) ? (
             <CharactersList
-              allCharacters={allCharacters}
+              allCharacters={searchResult}
               isOpen={isOpen}
               handleClickCharacter={handleClickCharacter}
               id={charId}
@@ -70,15 +99,11 @@ export default function Main() {
             []
           )}
 
-          {loading ? (
-            <Loading />
-          ) : (
-            <CharacterInfos
-              allCharacters={allCharacters}
-              isOpen={isOpen}
-              id={charId}
-            />
-          )}
+          <CharacterInfos
+            allCharacters={searchResult}
+            isOpen={isOpen}
+            id={charId}
+          />
         </div>
       </div>
     </>
