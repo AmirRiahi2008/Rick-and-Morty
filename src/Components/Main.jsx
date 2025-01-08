@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 
 import { searchCharacter } from "../Services/SearchCharacter.js";
 import { getAllCharacters } from "../Services/GetAllCharacters.js";
+import { getEpisodes } from "../Services/GetEpisodes.js";
 import Loading from "./Loading";
 import Toast from "./Toast";
 import Header from "./Header";
 import CharacterInfos from "./CharacterInfos";
 import CharactersList from "./CharactersList";
+import { getCharacter } from "../Services/GetCharacter.js";
 
 export default function Main() {
   const [allCharacters, setAllCharacters] = useState([]);
@@ -16,6 +18,7 @@ export default function Main() {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState({ message: "ef", type: "error" });
   const [error, setError] = useState(false);
+  const [episodes, setEpisodes] = useState([]);
 
   useEffect(() => {
     async function characters() {
@@ -64,12 +67,27 @@ export default function Main() {
     }
   }
 
-  function handleClickCharacter(id) {
-    if (id !== charId) {
-      setIsOpen(true);
-      setCharId(id);
-    } else {
-      setCharId(null);
+  async function handleClickCharacter(id) {
+    try {
+      const data = await getCharacter(id);
+
+      if (!data) {
+        setToast({
+          message: `No episode found !"`,
+          type: "error",
+        });
+        setError(true);
+      }
+      setEpisodes(data.episode.slice(0,6));
+    } catch (err) {
+      console.log(err);
+    } finally {
+      if (id !== charId) {
+        setIsOpen(true);
+        setCharId(id);
+      } else {
+        setCharId(null);
+      }
     }
   }
 
@@ -103,6 +121,7 @@ export default function Main() {
             allCharacters={searchResult}
             isOpen={isOpen}
             id={charId}
+            episodes={episodes}
           />
         </div>
       </div>

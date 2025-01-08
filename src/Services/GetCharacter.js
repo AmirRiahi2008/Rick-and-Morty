@@ -1,4 +1,4 @@
-import { API_URL, error } from '../Helper/init'
+import {API_URL , error} from '../Helpers/init'
 
 export async function getCharacter(id) {
         try{

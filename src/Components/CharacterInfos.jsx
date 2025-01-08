@@ -1,6 +1,51 @@
-export default function CharacterInfos({ allCharacters, isOpen, id }) {
+import { useState, useEffect } from "react";
+import CharacterEpisode from "./CharacterEpisode";
+
+export default function CharacterInfos({
+  allCharacters,
+  isOpen,
+  id,
+  episodes,
+}) {
   const a = allCharacters.slice(0, 5).filter((char) => char.id === id);
-  
+  const [episodeData, setEpisodeData] = useState([]);
+  const [initialData, setInitialData] = useState([]);
+  const [isSorted, setIsSorted] = useState(false);
+
+  useEffect(() => {
+    const getEpisodes = async () => {
+      if (episodes) {
+        try {
+          const episodeData = await Promise.all(
+            episodes.map(async (episode) => {
+              const response = await fetch(episode);
+              const data = await response.json();
+              return data;
+            })
+          );
+          setEpisodeData(episodeData);
+          setInitialData(episodeData);
+        } catch (error) {
+          console.error("Error fetching episodes:", error);
+        }
+      }
+    };
+    getEpisodes();
+  }, [episodes]);
+
+  function handleClick() {
+    if (isSorted) {
+      setEpisodeData(initialData);
+      setIsSorted(false);
+    } else {
+      const sortedEpisodes = [...episodeData].sort(
+        (a, b) =>
+          new Date(b.air_date).getTime() - new Date(a.air_date).getTime()
+      );
+      setEpisodeData(sortedEpisodes);
+      setIsSorted(true);
+    }
+  }
 
   return (
     <>
@@ -10,7 +55,6 @@ export default function CharacterInfos({ allCharacters, isOpen, id }) {
             flex: "1 1 0%",
             color: "var(--slate-300)",
           }}
-          data-darkreader-inline-color=""
         >
           <div className="character-detail">
             <img
@@ -40,7 +84,7 @@ export default function CharacterInfos({ allCharacters, isOpen, id }) {
           <div className="character-episodes">
             <div className="title">
               <h2>List of Episodes</h2>
-              <button>
+              <button onClick={handleClick}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
@@ -60,42 +104,17 @@ export default function CharacterInfos({ allCharacters, isOpen, id }) {
               </button>
             </div>
             <ul>
-              <li>
-                <div>
-                  01-S01E01 : <strong>Pilot</strong>
-                </div>
-                <div className="badge badge--secondary">December 2, 2013</div>
-              </li>
-              <li>
-                <div>
-                  02-S01E02 : <strong>Lawnmower Dog</strong>
-                </div>
-                <div className="badge badge--secondary">December 9, 2013</div>
-              </li>
-              <li>
-                <div>
-                  03-S01E03 : <strong>Anatomy Park</strong>
-                </div>
-                <div className="badge badge--secondary">December 16, 2013</div>
-              </li>
-              <li>
-                <div>
-                  04-S01E04 : <strong>M. Night Shaym-Aliens!</strong>
-                </div>
-                <div className="badge badge--secondary">January 13, 2014</div>
-              </li>
-              <li>
-                <div>
-                  05-S01E05 : <strong>Meeseeks and Destroy</strong>
-                </div>
-                <div className="badge badge--secondary">January 20, 2014</div>
-              </li>
-              <li>
-                <div>
-                  06-S01E06 : <strong>Rick Potion #9</strong>
-                </div>
-                <div className="badge badge--secondary">January 27, 2014</div>
-              </li>
+              {episodeData.length > 0 ? (
+                episodeData.map((episode, index) => (
+                  <CharacterEpisode
+                    index={index}
+                    key={episode.id}
+                    episode={episode}
+                  />
+                ))
+              ) : (
+                <li>Loading...</li>
+              )}
             </ul>
           </div>
         </div>

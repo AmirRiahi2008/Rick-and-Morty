@@ -5,6 +5,7 @@ export default function CharactersList({
   id,
   isOpen
 }) {
+  
   const characters = allCharacters
     .slice(0, 5)
     .map((character, index) => (
