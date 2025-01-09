@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 
 import { searchCharacter } from "../Services/SearchCharacter.js";
 import { getAllCharacters } from "../Services/GetAllCharacters.js";
-import { getEpisodes } from "../Services/GetEpisodes.js";
 import Loading from "./Loading";
 import Toast from "./Toast";
 import Header from "./Header";
@@ -16,72 +15,76 @@ export default function Main() {
   const [isOpen, setIsOpen] = useState(false);
   const [charId, setCharId] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState({ message: "ef", type: "error" });
+  const [characterLoading, setCharacterLoading] = useState(false);
+  const [toast, setToast] = useState({ message: "", type: "" });
   const [error, setError] = useState(false);
   const [episodes, setEpisodes] = useState([]);
 
   useEffect(() => {
-    async function characters() {
+    async function fetchCharacters() {
       try {
+        setLoading(true);
         const charactersData = await getAllCharacters();
-
         setAllCharacters(charactersData.results);
         setSearchResult(charactersData.results);
       } catch (err) {
-        console.log(err);
+        handleError("Error Getting All Characters", "error", err);
+      } finally {
+        setLoading(false);
       }
     }
-    characters();
+    fetchCharacters();
   }, []);
+
+  function handleError(message, type = "error", err = null) {
+    setToast({ message, type });
+    setError(true);
+    if (err) console.error(err);
+  }
 
   let lastSearch = null;
   async function handleSearch(value) {
     lastSearch = value;
     try {
-      if (!value || value.trim() === "") {
+      setLoading(true);
+      if (!value.trim()) {
         setSearchResult(allCharacters);
         setError(false);
         return;
       }
-
       const data = await searchCharacter(value);
-
       if (lastSearch !== value) return;
-
-      if (!data || !data.results || data.results.length === 0) {
-        setIsOpen(false);
-        setToast({
-          message: `No characters found for "${value}"`,
-          type: "error",
-        });
-        setError(true);
+      if (!data?.results?.length) {
+        handleError(`No characters found for "${value}"`, "error");
         setSearchResult([]);
         return;
       }
       setSearchResult(data.results);
       setError(false);
     } catch (err) {
-      console.log(err);
-      setError(true);
-      setToast({ message: "An error occurred while searching", type: "error" });
+      handleError("An error occurred while searching", "error", err);
+    } finally {
+      setLoading(false);
     }
   }
 
   async function handleClickCharacter(id) {
     try {
+      setCharacterLoading(true);
       const data = await getCharacter(id);
-
       if (!data) {
-        setToast({
-          message: `No episode found !"`,
-          type: "error",
-        });
-        setError(true);
+        handleError("No episode found!", "error");
+        return;
       }
-      setEpisodes(data.episode.slice(0,6));
+      setEpisodes(data.episode.slice(0, 6));
     } catch (err) {
-      console.log(err);
+      handleError(
+        "An error occurred while fetching character details",
+        "error",
+        err
+      );
     } finally {
+      setCharacterLoading(false);
       if (id !== charId) {
         setIsOpen(true);
         setCharId(id);
@@ -93,36 +96,33 @@ export default function Main() {
 
   return (
     <>
-      {error && <Toast message={toast.message} type={toast.type} />}
-
+      {toast.message && <Toast message={toast.message} type={toast.type} />}
       <div className="app">
-        <div
-          style={{
-            position: "fixed",
-            zIndex: 9999,
-            inset: "16px",
-            pointerEvents: "none",
-          }}
-        ></div>
         <Header handleSearch={handleSearch} />
         <div className="main">
-          {Array.isArray(allCharacters) ? (
-            <CharactersList
-              allCharacters={searchResult}
-              isOpen={isOpen}
-              handleClickCharacter={handleClickCharacter}
-              id={charId}
-            />
+          {loading ? (
+            <Loading />
           ) : (
-            []
+            <>
+              <CharactersList
+                allCharacters={searchResult}
+                isOpen={isOpen}
+                handleClickCharacter={handleClickCharacter}
+                id={charId}
+              />
+              {isOpen &&
+                (characterLoading ? (
+                  <Loading />
+                ) : (
+                  <CharacterInfos
+                    allCharacters={searchResult}
+                    isOpen={isOpen}
+                    id={charId}
+                    episodes={episodes}
+                  />
+                ))}
+            </>
           )}
-
-          <CharacterInfos
-            allCharacters={searchResult}
-            isOpen={isOpen}
-            id={charId}
-            episodes={episodes}
-          />
         </div>
       </div>
     </>

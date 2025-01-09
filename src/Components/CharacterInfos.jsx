@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import CharacterEpisode from "./CharacterEpisode";
+import Loading from "./Loading";
 
 export default function CharacterInfos({
   allCharacters,
@@ -11,11 +12,13 @@ export default function CharacterInfos({
   const [episodeData, setEpisodeData] = useState([]);
   const [initialData, setInitialData] = useState([]);
   const [isSorted, setIsSorted] = useState(false);
+  const [localLoading, setLocalLoading] = useState(false);
 
   useEffect(() => {
     const getEpisodes = async () => {
       if (episodes) {
         try {
+          setLocalLoading(true);
           const episodeData = await Promise.all(
             episodes.map(async (episode) => {
               const response = await fetch(episode);
@@ -27,6 +30,8 @@ export default function CharacterInfos({
           setInitialData(episodeData);
         } catch (error) {
           console.error("Error fetching episodes:", error);
+        } finally {
+          setLocalLoading(false); 
         }
       }
     };
@@ -59,7 +64,7 @@ export default function CharacterInfos({
           <div className="character-detail">
             <img
               src={a[0].image}
-              alt="Rick Sanchez"
+              alt={a[0].name}
               className="character-detail__img"
             />
             <div className="character-detail__info">
@@ -104,7 +109,9 @@ export default function CharacterInfos({
               </button>
             </div>
             <ul>
-              {episodeData.length > 0 ? (
+              {localLoading ? (
+                <Loading />
+              ) : episodeData.length > 0 ? (
                 episodeData.map((episode, index) => (
                   <CharacterEpisode
                     index={index}
@@ -113,7 +120,7 @@ export default function CharacterInfos({
                   />
                 ))
               ) : (
-                <li>Loading...</li>
+                <p>No episodes available.</p>
               )}
             </ul>
           </div>
@@ -125,7 +132,7 @@ export default function CharacterInfos({
             color: "var(--slate-300)",
           }}
         >
-          Please select a character
+          <p>Please select a character</p>
         </div>
       )}
     </>
