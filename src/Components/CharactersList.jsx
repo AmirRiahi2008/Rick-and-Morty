@@ -10,12 +10,13 @@ export default function CharactersList({
     .slice(0, 5)
     .map((character, index) => (
       <Character
-        key={index}
+        key={character.id}
         index={index}
         info={character}
         onClick={handleClickCharacter}
         isOpen={isOpen}
         id={id}
+        
       />
     ));
     if(!characters)console.log("lfheohff");

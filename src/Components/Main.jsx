@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect  ,useMemo } from "react";
 
 import { searchCharacter } from "../Services/SearchCharacter.js";
 import { getAllCharacters } from "../Services/GetAllCharacters.js";
@@ -8,8 +8,11 @@ import Header from "./Header";
 import CharacterInfos from "./CharacterInfos";
 import CharactersList from "./CharactersList";
 import { getCharacter } from "../Services/GetCharacter.js";
+import { useLocalStorage } from "../Hooks/useLocalStorage.js";
 
 export default function Main() {
+  const { getItem, setItem, removeItem } = useLocalStorage("liked");
+
   const [allCharacters, setAllCharacters] = useState([]);
   const [searchResult, setSearchResult] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -19,6 +22,17 @@ export default function Main() {
   const [toast, setToast] = useState({ message: "", type: "" });
   const [error, setError] = useState(false);
   const [episodes, setEpisodes] = useState([]);
+  const [isOpenLikedBox, setIsOpenLikedBox] = useState(false);
+  const [isLike, setIsLike] = useState(false);
+  const [likedChars, setLikedChars] = useState([]);
+
+  useEffect(() => {
+    const likedCharacters = getItem();
+    setLikedChars(likedCharacters);
+    if (!likedCharacters) {
+      localStorage.setItem("liked", JSON.stringify([]));
+    }
+  }, []);
 
   useEffect(() => {
     async function fetchCharacters() {
@@ -88,17 +102,58 @@ export default function Main() {
       if (id !== charId) {
         setIsOpen(true);
         setCharId(id);
+        const localStorageProperties = getItem();
+        const curCharState = localStorageProperties.some(
+          (char) => char.id === id
+        );
+
+        setIsLike(curCharState);
       } else {
         setCharId(null);
+        setIsOpen(false);
       }
+    }
+  }
+  function handleClickLikeBox() {
+    setIsOpenLikedBox((prev) => !prev);
+  }
+
+  function handleLike() {
+    const curChar = allCharacters.find((char) => char.id === charId);
+    const curCharOnSearch = searchResult.find((char) => char.id === charId);
+
+    const charToSave = curCharOnSearch || curChar;
+
+    if (charToSave) {
+      setLikedChars((prev) => [...prev, charToSave]);
+      setItem(charToSave);
+      setIsLike(true);
+    }
+  }
+  function handleDeleteLikedCharacter(e) {
+    const id = parseInt(e.target.closest(".list__item").dataset.id);
+    const indexOfLikedChar = likedChars.findIndex((char) => char.id === id);
+
+    if (indexOfLikedChar !== -1) {
+      removeItem(indexOfLikedChar);
+      setLikedChars((prev) =>
+        prev.filter((_, index) => index !== indexOfLikedChar)
+      );
+      setIsLike(false);
     }
   }
 
   return (
     <>
-      {toast.message && <Toast message={toast.message} type={toast.type} />}
+      {error && <Toast message={toast.message} type={toast.type} />}
       <div className="app">
-        <Header handleSearch={handleSearch} />
+        <Header
+          handleSearch={handleSearch}
+          handleClickLikeBox={handleClickLikeBox}
+          handleDeleteLikedCharacter={handleDeleteLikedCharacter}
+          isOpenLikedBox={isOpenLikedBox}
+          likedChars={likedChars}
+        />
         <div className="main">
           {loading ? (
             <Loading />
@@ -110,17 +165,18 @@ export default function Main() {
                 handleClickCharacter={handleClickCharacter}
                 id={charId}
               />
-              {isOpen &&
-                (characterLoading ? (
-                  <Loading />
-                ) : (
-                  <CharacterInfos
-                    allCharacters={searchResult}
-                    isOpen={isOpen}
-                    id={charId}
-                    episodes={episodes}
-                  />
-                ))}
+              {characterLoading ? (
+                <Loading />
+              ) : (
+                <CharacterInfos
+                  allCharacters={searchResult}
+                  isOpen={isOpen}
+                  id={charId}
+                  episodes={episodes}
+                  isLike={isLike}
+                  handleLike={handleLike}
+                />
+              )}
             </>
           )}
         </div>

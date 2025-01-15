@@ -7,8 +7,10 @@ export default function CharacterInfos({
   isOpen,
   id,
   episodes,
+  isLike,
+  handleLike
 }) {
-  const a = allCharacters.slice(0, 5).filter((char) => char.id === id);
+  const curChar = allCharacters.slice(0, 5).filter((char) => char.id === id);
   const [episodeData, setEpisodeData] = useState([]);
   const [initialData, setInitialData] = useState([]);
   const [isSorted, setIsSorted] = useState(false);
@@ -31,7 +33,7 @@ export default function CharacterInfos({
         } catch (error) {
           console.error("Error fetching episodes:", error);
         } finally {
-          setLocalLoading(false); 
+          setLocalLoading(false);
         }
       }
     };
@@ -54,7 +56,7 @@ export default function CharacterInfos({
 
   return (
     <>
-      {isOpen && a[0] ? (
+      {isOpen && curChar[0] ? (
         <div
           style={{
             flex: "1 1 0%",
@@ -63,26 +65,30 @@ export default function CharacterInfos({
         >
           <div className="character-detail">
             <img
-              src={a[0].image}
-              alt={a[0].name}
+              src={curChar[0].image}
+              alt={curChar[0].name}
               className="character-detail__img"
             />
             <div className="character-detail__info">
               <h3 className="name">
                 <span>👨</span>
-                <span>&nbsp;{a[0].name}</span>
+                <span>&nbsp;{curChar[0].name}</span>
               </h3>
               <div className="info">
                 <span className="status"></span>
-                <span>&nbsp;{a[0].status}</span>
-                <span> - {a[0].species} </span>
+                <span>&nbsp;{curChar[0].status}</span>
+                <span> - {curChar[0].species} </span>
               </div>
               <div className="location">
                 <p>Last known location:</p>
-                <span>{a[0].location.name}</span>
+                <span>{curChar[0].location.name}</span>
               </div>
               <div className="actions">
-                <p>Already added to Favorites ✅</p>
+                {isLike ? (
+                  <p>Already added to Favorites ✅</p>
+                ) : (
+                  <button onClick={handleLike} className="btn btn--primary">Add to Favorites</button>
+                )}
               </div>
             </div>
           </div>
