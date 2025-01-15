@@ -1,4 +1,4 @@
-<a href="https://rick-and-morty-grm4lt5fq-amirrezas-projects-4fd6211a.vercel.app/">Demo</a>
+<a target="_blank" href="https://rick-and-morty-grm4lt5fq-amirrezas-projects-4fd6211a.vercel.app/">Demo</a>
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
