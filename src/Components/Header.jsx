@@ -29,7 +29,7 @@ export default function Header({
         {...name}
       />
       <div className="navbar__result">
-        Found {name.value ? "search results" : "all characters"}
+        Created By Amirreza Riahi
       </div>
 
       {isOpenLikedBox ? (
