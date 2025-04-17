@@ -1,3 +1,4 @@
+//custom hook
 export function useLocalStorage(key) {
   const setItem = (value) => {
     try {
